@@ -11,7 +11,7 @@ ___INFO___
     "displayName": "Veribenim",
     "thumbnail": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg=="
   },
-  "description": "Veribenim Cookie Consent \u0026 Privacy Platform — Google Consent Mode v2 integration for GTM. Automatically syncs user consent choices with Google tags (Analytics, Ads, etc.) and supports IAB TCF 2.2.",
+  "description": "Veribenim Cookie Consent \u0026 Privacy Platform — Google Consent Mode v2 integration for GTM. Automatically syncs user consent choices with Google tags (Analytics, Ads, etc.).",
   "containerContexts": [
     "WEB"
   ],
@@ -301,7 +301,6 @@ const log                    = require('logToConsole');
 const callInWindow           = require('callInWindow');
 const copyFromWindow         = require('copyFromWindow');
 const setInWindow            = require('setInWindow');
-const createArgumentsQueue   = require('createArgumentsQueue');
 const makeNumber             = require('makeNumber');
 const makeString             = require('makeString');
 const getType                = require('getType');
@@ -315,7 +314,7 @@ const STORAGE_KEY = 'veribenimIsAwesome';
  * Sandboxed JS'te doğrudan localStorage erişimi yok,
  * bu yüzden callInWindow ile window üzerinden okuyoruz.
  */
-function readVeribenigConsent() {
+function readVeribenimConsent() {
   const raw = callInWindow('localStorage.getItem', STORAGE_KEY);
   if (!raw) return null;
 
@@ -403,7 +402,6 @@ function buildConsentFromParams() {
 function pushToDataLayer(consentState, command) {
   if (!data.enableDataLayerEvent) return;
 
-  const dataLayer = copyFromWindow('dataLayer') || [];
   callInWindow('dataLayer.push', {
     event: 'veribenim_consent_update',
     veribenim_consent_command: command,
@@ -418,21 +416,13 @@ if (data.consentCommand === 'default') {
 
   let consentState = buildConsentFromParams();
 
-  // Otomatik okuma aktifse, localStorage'dan consent al
+  // Otomatik okuma aktifse, localStorage'dan consent al.
+  // buildConsentFromStorage kategori bazında hem ilk ziyaret
+  // (is_enabled_by_default) hem de kayıtlı kullanıcı tercihlerini çözer.
   if (data.autoReadConsent) {
-    const sessionData = readVeribenigConsent();
-
-    if (sessionData && sessionData.consents) {
-      if (sessionData.lastInteraction) {
-        // Kullanıcı daha önce tercih yapmış — kayıtlı consent'i kullan
-        const storedConsent = buildConsentFromStorage(sessionData);
-        if (storedConsent) consentState = storedConsent;
-      } else {
-        // İlk ziyaret — is_enabled_by_default olanları hesaba kat
-        const defaultConsent = buildConsentFromStorage(sessionData);
-        if (defaultConsent) consentState = defaultConsent;
-      }
-    }
+    const sessionData = readVeribenimConsent();
+    const storedConsent = buildConsentFromStorage(sessionData);
+    if (storedConsent) consentState = storedConsent;
   }
 
   // wait_for_update ekle
@@ -465,9 +455,9 @@ if (data.consentCommand === 'default') {
   }
 
   // ── Veribenim consent değişiklik dinleyicisi ──
-  // Bundle, consent değiştiğinde window.__vbn_onConsentChange callback'ini çağırır.
-  // Bu callback GTM updateConsentState ile senkronize eder.
-  setInWindow('__vbn_gtm_onConsentChange', function(newConsentState) {
+  // Bundle, consent değiştiğinde window.__vbn_gtm_onConsentChange callback'ini
+  // çağırır. Bu callback GTM updateConsentState ile senkronize eder.
+  function applyConsentUpdate(newConsentState) {
     if (!newConsentState) return;
 
     updateConsentState({
@@ -482,7 +472,26 @@ if (data.consentCommand === 'default') {
 
     log('Veribenim GTM: Consent updated via listener', newConsentState);
     pushToDataLayer(newConsentState, 'update');
-  }, true);
+  }
+
+  setInWindow('__vbn_gtm_onConsentChange', applyConsentUpdate, true);
+
+  // Handshake: Bundle, GTM bu callback'i kaydetmeden ÖNCE consent değiştirmiş
+  // olabilir (yarış durumu). Bu durumda bundle son durumu
+  // window.__vbn_gtm_pendingConsent içine yazar; varsa hemen uygula.
+  if (data.autoReadConsent) {
+    const pending = copyFromWindow('__vbn_gtm_pendingConsent');
+    if (pending) {
+      applyConsentUpdate(pending);
+    } else {
+      // Kullanıcı zaten tercih yapmışsa (lastInteraction), kayıtlı durumu uygula.
+      const session = readVeribenimConsent();
+      if (session && session.lastInteraction) {
+        const already = buildConsentFromStorage(session);
+        if (already) applyConsentUpdate(already);
+      }
+    }
+  }
 
 } else if (data.consentCommand === 'update') {
   // ── UPDATE: Kullanıcı tercihini değiştirdiğinde ──
@@ -490,7 +499,7 @@ if (data.consentCommand === 'default') {
   let consentState = buildConsentFromParams();
 
   if (data.autoReadConsent) {
-    const sessionData = readVeribenigConsent();
+    const sessionData = readVeribenimConsent();
     const storedConsent = buildConsentFromStorage(sessionData);
     if (storedConsent) consentState = storedConsent;
   }
@@ -641,6 +650,45 @@ ___WEB_PERMISSIONS___
                 "mapValue": [
                   {
                     "type": 1,
+                    "string": "__vbn_gtm_pendingConsent"
+                  },
+                  {
+                    "type": 8,
+                    "boolean": true
+                  },
+                  {
+                    "type": 8,
+                    "boolean": false
+                  },
+                  {
+                    "type": 8,
+                    "boolean": false
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "key"
+                  },
+                  {
+                    "type": 1,
+                    "string": "read"
+                  },
+                  {
+                    "type": 1,
+                    "string": "write"
+                  },
+                  {
+                    "type": 1,
+                    "string": "execute"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
                     "string": "__vbn_gtm_onConsentChange"
                   },
                   {
@@ -680,7 +728,7 @@ ___WEB_PERMISSIONS___
                 "mapValue": [
                   {
                     "type": 1,
-                    "string": "localStorage"
+                    "string": "localStorage.getItem"
                   },
                   {
                     "type": 8,
@@ -1126,4 +1174,127 @@ scenarios:
       personalization_storage: 'granted',
       security_storage: 'granted'
     });
+    assertApi('gtmOnSuccess').wasCalled();
+
+- name: Default consent - auto-read from storage (user interacted)
+  code: |-
+    const mockData = {
+      consentCommand: 'default',
+      waitForUpdate: 500,
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      functionality_storage: 'denied',
+      personalization_storage: 'denied',
+      security_storage: 'granted',
+      autoReadConsent: true,
+      regions: '',
+      urlPassthrough: false,
+      adsDataRedaction: false,
+      enableDataLayerEvent: false
+    };
+
+    const storage = '{"consents":{"ga":true,"fb":false},"lastInteraction":"2026-06-01"}';
+    const categories = [
+      { id: 'analytics', cookies: [ { id: 'ga' } ] },
+      { id: 'marketing', cookies: [ { id: 'fb' } ] }
+    ];
+
+    mock('callInWindow', function(path) {
+      if (path === 'localStorage.getItem') return storage;
+      return undefined;
+    });
+    mock('copyFromWindow', function(key) {
+      if (key === '__vbn_cookieCategories') return categories;
+      return undefined;
+    });
+
+    runCode(mockData);
+
+    assertApi('setDefaultConsentState').wasCalledWith({
+      analytics_storage: 'granted',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      functionality_storage: 'denied',
+      personalization_storage: 'denied',
+      security_storage: 'granted',
+      wait_for_update: 500
+    });
+    assertApi('gtmOnSuccess').wasCalled();
+
+- name: Update consent - auto-read from storage
+  code: |-
+    const mockData = {
+      consentCommand: 'update',
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      functionality_storage: 'denied',
+      personalization_storage: 'denied',
+      security_storage: 'granted',
+      autoReadConsent: true,
+      enableDataLayerEvent: false
+    };
+
+    const storage = '{"consents":{"ga":true,"fb":true},"lastInteraction":"2026-06-01"}';
+    const categories = [
+      { id: 'analytics', cookies: [ { id: 'ga' } ] },
+      { id: 'marketing', cookies: [ { id: 'fb' } ] }
+    ];
+
+    mock('callInWindow', function(path) {
+      if (path === 'localStorage.getItem') return storage;
+      return undefined;
+    });
+    mock('copyFromWindow', function(key) {
+      if (key === '__vbn_cookieCategories') return categories;
+      return undefined;
+    });
+
+    runCode(mockData);
+
+    assertApi('updateConsentState').wasCalledWith({
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      functionality_storage: 'denied',
+      personalization_storage: 'denied',
+      security_storage: 'granted'
+    });
+    assertApi('gtmOnSuccess').wasCalled();
+
+- name: DataLayer event pushed on default
+  code: |-
+    const mockData = {
+      consentCommand: 'default',
+      waitForUpdate: 500,
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      functionality_storage: 'denied',
+      personalization_storage: 'denied',
+      security_storage: 'granted',
+      autoReadConsent: false,
+      regions: '',
+      urlPassthrough: false,
+      adsDataRedaction: false,
+      enableDataLayerEvent: true
+    };
+
+    let pushedEvent;
+    mock('callInWindow', function(path, obj) {
+      if (path === 'dataLayer.push') pushedEvent = obj;
+      return undefined;
+    });
+
+    runCode(mockData);
+
+    assertThat(pushedEvent).isDefined();
+    assertThat(pushedEvent.event).isEqualTo('veribenim_consent_update');
+    assertThat(pushedEvent.veribenim_consent_command).isEqualTo('default');
     assertApi('gtmOnSuccess').wasCalled();

@@ -8,6 +8,5 @@ versions:
       - Automatic consent reading from Veribenim localStorage
       - Region-based default consent
       - URL passthrough and ads data redaction
-      - IAB TCF 2.2 compatible
       - Real-time consent change listener via __vbn_gtm_onConsentChange callback
       - Optional dataLayer event push
