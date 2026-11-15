@@ -5,21 +5,19 @@ ___INFO___
   "id": "cvt_veribenim_consent_mode",
   "version": 1,
   "securityGroups": [],
-  "displayName": "Veribenim - Consent Mode",
+  "displayName": "Veribenim Consent Mode",
+  "categories": [
+    "TAG_MANAGEMENT",
+    "UTILITY"
+  ],
   "brand": {
     "id": "brand_veribenim",
     "displayName": "Veribenim",
     "thumbnail": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg=="
   },
-  "description": "Veribenim Cookie Consent \u0026 Privacy Platform — Google Consent Mode v2 integration for GTM. Automatically syncs user consent choices with Google tags (Analytics, Ads, etc.).",
+  "description": "Sends the choices visitors make in the Veribenim cookie banner to Google consent mode v2. Sets default consent states (optionally per region) and updates them whenever the banner reports a decision. Requires the Veribenim banner script on the page. Setup guide: https://github.com/Pariette-Inc/veribenim.gtm-template#readme",
   "containerContexts": [
     "WEB"
-  ],
-  "categories": [
-    "TAG_MANAGEMENT",
-    "UTILITY",
-    "ANALYTICS",
-    "ADVERTISING"
   ]
 }
 
@@ -28,261 +26,105 @@ ___TEMPLATE_PARAMETERS___
 
 [
   {
-    "type": "GROUP",
-    "name": "grpConsentCommand",
-    "displayName": "Consent Command",
-    "groupStyle": "NO_ZIPPY",
-    "subParams": [
+    "type": "SELECT",
+    "name": "consentCommand",
+    "displayName": "Consent command",
+    "macrosInSelect": false,
+    "selectItems": [
       {
-        "type": "SELECT",
-        "name": "consentCommand",
-        "displayName": "Command",
-        "macrosInSelect": false,
-        "selectItems": [
-          {
-            "value": "default",
-            "displayValue": "Default (Initialization)"
-          },
-          {
-            "value": "update",
-            "displayValue": "Update"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "default",
-        "help": "\"Default\" sets the initial consent state when the page loads. \"Update\" changes the consent state after user interaction."
+        "value": "default",
+        "displayValue": "Default"
       },
       {
-        "type": "TEXT",
-        "name": "waitForUpdate",
-        "displayName": "Wait for Update (ms)",
-        "simpleValueType": true,
-        "defaultValue": 500,
-        "valueValidators": [
-          {
-            "type": "POSITIVE_NUMBER"
-          }
-        ],
-        "help": "How long (in milliseconds) to wait for a consent update before using the default values. Recommended: 500.",
-        "enablingConditions": [
-          {
-            "paramName": "consentCommand",
-            "paramValue": "default",
-            "type": "EQUALS"
-          }
-        ]
+        "value": "update",
+        "displayValue": "Update"
       }
-    ]
+    ],
+    "simpleValueType": true,
+    "defaultValue": "default",
+    "help": "<strong>Default</strong> sets the initial consent states and listens for the Veribenim banner. Fire it on the <strong>Consent Initialization - All Pages</strong> trigger.<br><strong>Update</strong> applies the <em>vbn_consent</em> value that the banner pushes to the data layer. Fire it on a custom event trigger for <em>vbn_consent_update</em>."
   },
   {
-    "type": "GROUP",
-    "name": "grpConsentSettings",
-    "displayName": "Consent Settings",
-    "groupStyle": "NO_ZIPPY",
-    "subParams": [
+    "type": "SIMPLE_TABLE",
+    "name": "defaultSettings",
+    "displayName": "Default consent settings",
+    "simpleTableColumns": [
       {
-        "type": "SELECT",
-        "name": "analytics_storage",
-        "displayName": "Analytics Storage",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "granted",
-            "displayValue": "Granted"
-          },
-          {
-            "value": "denied",
-            "displayValue": "Denied"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "denied",
-        "help": "Controls storage for analytics purposes (e.g., visit duration)."
-      },
-      {
-        "type": "SELECT",
-        "name": "ad_storage",
-        "displayName": "Ad Storage",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "granted",
-            "displayValue": "Granted"
-          },
-          {
-            "value": "denied",
-            "displayValue": "Denied"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "denied",
-        "help": "Controls storage for advertising purposes (e.g., cookies)."
-      },
-      {
-        "type": "SELECT",
-        "name": "ad_user_data",
-        "displayName": "Ad User Data",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "granted",
-            "displayValue": "Granted"
-          },
-          {
-            "value": "denied",
-            "displayValue": "Denied"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "denied",
-        "help": "Controls whether user data can be sent to Google for advertising."
-      },
-      {
-        "type": "SELECT",
-        "name": "ad_personalization",
-        "displayName": "Ad Personalization",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "granted",
-            "displayValue": "Granted"
-          },
-          {
-            "value": "denied",
-            "displayValue": "Denied"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "denied",
-        "help": "Controls whether data can be used for ad personalization (remarketing)."
-      },
-      {
-        "type": "SELECT",
-        "name": "functionality_storage",
-        "displayName": "Functionality Storage",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "granted",
-            "displayValue": "Granted"
-          },
-          {
-            "value": "denied",
-            "displayValue": "Denied"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "denied",
-        "help": "Controls storage for website functionality (e.g., language preferences)."
-      },
-      {
-        "type": "SELECT",
-        "name": "personalization_storage",
-        "displayName": "Personalization Storage",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "granted",
-            "displayValue": "Granted"
-          },
-          {
-            "value": "denied",
-            "displayValue": "Denied"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "denied",
-        "help": "Controls storage for personalization (e.g., video recommendations)."
-      },
-      {
-        "type": "SELECT",
-        "name": "security_storage",
-        "displayName": "Security Storage",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "granted",
-            "displayValue": "Granted"
-          },
-          {
-            "value": "denied",
-            "displayValue": "Denied"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "granted",
-        "help": "Controls storage for security purposes (e.g., authentication, fraud prevention). Always granted by default."
-      }
-    ]
-  },
-  {
-    "type": "GROUP",
-    "name": "grpAutoRead",
-    "displayName": "Automatic Consent Reading",
-    "groupStyle": "ZIPPY_CLOSED",
-    "subParams": [
-      {
-        "type": "CHECKBOX",
-        "name": "autoReadConsent",
-        "checkboxText": "Automatically read consent from Veribenim storage",
-        "simpleValueType": true,
-        "defaultValue": true,
-        "help": "When enabled, the template will automatically read the user's consent choices from Veribenim's localStorage (key: veribenimIsAwesome) and override the manual settings above. This is the recommended setting."
-      }
-    ]
-  },
-  {
-    "type": "GROUP",
-    "name": "grpRegion",
-    "displayName": "Region Settings",
-    "groupStyle": "ZIPPY_CLOSED",
-    "subParams": [
-      {
-        "type": "TEXT",
-        "name": "regions",
-        "displayName": "Regions (comma-separated ISO 3166-2)",
-        "simpleValueType": true,
         "defaultValue": "",
-        "help": "Optionally restrict these consent defaults to specific regions. Leave blank to apply globally. Example: TR,DE,FR,AT,BE,BG,HR,CY,CZ,DK,EE,FI,GR,HU,IE,IT,LV,LT,LU,MT,NL,PL,PT,RO,SK,SI,ES,SE",
-        "enablingConditions": [
-          {
-            "paramName": "consentCommand",
-            "paramValue": "default",
-            "type": "EQUALS"
-          }
-        ]
+        "displayName": "Region (leave blank to apply globally)",
+        "name": "region",
+        "type": "TEXT"
+      },
+      {
+        "defaultValue": "",
+        "displayName": "Granted consent types (comma separated)",
+        "name": "granted",
+        "type": "TEXT"
+      },
+      {
+        "defaultValue": "ad_storage,analytics_storage,ad_user_data,ad_personalization,functionality_storage,personalization_storage",
+        "displayName": "Denied consent types (comma separated)",
+        "name": "denied",
+        "type": "TEXT"
+      }
+    ],
+    "newRowButtonText": "Add region",
+    "help": "One row per region. Region uses ISO 3166-2 codes, for example <em>TR, DE, US-CA</em>. A row with a blank region applies to every region without its own row; the most specific region wins.<br>Consent types: ad_storage, analytics_storage, ad_user_data, ad_personalization, functionality_storage, personalization_storage. Types you don't list aren't set. Unknown names are ignored. <em>security_storage</em> is always granted and can't be denied.",
+    "enablingConditions": [
+      {
+        "paramName": "consentCommand",
+        "paramValue": "default",
+        "type": "EQUALS"
       }
     ]
   },
   {
-    "type": "GROUP",
-    "name": "grpAdvanced",
-    "displayName": "Advanced Settings",
-    "groupStyle": "ZIPPY_CLOSED",
-    "subParams": [
+    "type": "TEXT",
+    "name": "waitForUpdate",
+    "displayName": "Wait for update (milliseconds)",
+    "simpleValueType": true,
+    "defaultValue": "500",
+    "valueValidators": [
       {
-        "type": "CHECKBOX",
-        "name": "urlPassthrough",
-        "checkboxText": "Enable URL passthrough",
-        "simpleValueType": true,
-        "defaultValue": true,
-        "help": "Pass ad click information through URL parameters when ad storage consent is denied."
-      },
+        "type": "NON_NEGATIVE_NUMBER"
+      }
+    ],
+    "help": "How long Google tags wait for an update before using the defaults. Example: <em>500</em>. An invalid value falls back to 500.",
+    "enablingConditions": [
       {
-        "type": "CHECKBOX",
-        "name": "adsDataRedaction",
-        "checkboxText": "Enable ads data redaction",
-        "simpleValueType": true,
-        "defaultValue": true,
-        "help": "When ad storage consent is denied, ad click identifiers will be redacted."
-      },
+        "paramName": "consentCommand",
+        "paramValue": "default",
+        "type": "EQUALS"
+      }
+    ]
+  },
+  {
+    "type": "CHECKBOX",
+    "name": "adsDataRedaction",
+    "checkboxText": "Redact ads data when ad_storage is denied",
+    "simpleValueType": true,
+    "defaultValue": true,
+    "help": "Sets <em>ads_data_redaction</em>. When ad_storage is denied, ad click identifiers in Google Ads and Floodlight requests are redacted. The Veribenim banner script always turns this on as well.",
+    "enablingConditions": [
       {
-        "type": "CHECKBOX",
-        "name": "enableDataLayerEvent",
-        "checkboxText": "Push consent state to dataLayer",
-        "simpleValueType": true,
-        "defaultValue": false,
-        "help": "Pushes a 'veribenim_consent_update' event to the dataLayer whenever consent state changes."
+        "paramName": "consentCommand",
+        "paramValue": "default",
+        "type": "EQUALS"
+      }
+    ]
+  },
+  {
+    "type": "CHECKBOX",
+    "name": "urlPassthrough",
+    "checkboxText": "Pass ad click information through URLs",
+    "simpleValueType": true,
+    "defaultValue": false,
+    "help": "Sets <em>url_passthrough</em>. Click identifiers (gclid, dclid, wbraid) are added to internal links while storage is denied. Off by default; match the URL passthrough setting of your Veribenim site.",
+    "enablingConditions": [
+      {
+        "paramName": "consentCommand",
+        "paramValue": "default",
+        "type": "EQUALS"
       }
     ]
   }
@@ -291,226 +133,200 @@ ___TEMPLATE_PARAMETERS___
 
 ___SANDBOXED_JS_FOR_WEB_TEMPLATE___
 
-// Veribenim — Google Consent Mode v2 Template for GTM
-// https://veribenim.com | https://pariette.com
+// Veribenim Consent Mode — Google Tag Manager community template.
+// https://veribenim.com
+//
+// Contract with the Veribenim banner script (bundle):
+//   - window.__vbn_cookieCategories  set by the bundle as soon as it runs;
+//                                    used here only to tell whether the
+//                                    banner loaded.
+//   - window.__vbn_gtm_onConsentChange(payload)
+//                                    registered by this template; the bundle
+//                                    calls it on every decision and on every
+//                                    restored decision.
+//   - dataLayer event 'vbn_consent_update' with 'vbn_consent' (the same
+//     payload) and 'vbn_consent_source' ('user' | 'restored').
+//   payload = { analytics_storage, ad_storage, ad_user_data,
+//               ad_personalization, functionality_storage,
+//               personalization_storage } each 'granted' | 'denied'.
+//
+// Rules:
+//   1. Missing keys are never filled in. Only the keys the banner sent are
+//      updated.
+//   2. Values other than 'granted' / 'denied' are ignored.
+//   3. If the banner did not load, the tag fails (after the defaults are set,
+//      so visitors are still not tracked without consent).
+//   security_storage is never denied.
 
 const setDefaultConsentState = require('setDefaultConsentState');
-const updateConsentState     = require('updateConsentState');
-const gtagSet                = require('gtagSet');
-const log                    = require('logToConsole');
-const callInWindow           = require('callInWindow');
-const copyFromWindow         = require('copyFromWindow');
-const setInWindow            = require('setInWindow');
-const makeNumber             = require('makeNumber');
-const makeString             = require('makeString');
-const getType                = require('getType');
-const JSON                   = require('JSON');
-const Object                 = require('Object');
+const updateConsentState = require('updateConsentState');
+const gtagSet = require('gtagSet');
+const copyFromWindow = require('copyFromWindow');
+const setInWindow = require('setInWindow');
+const copyFromDataLayer = require('copyFromDataLayer');
+const getType = require('getType');
+const makeNumber = require('makeNumber');
+const makeString = require('makeString');
+const log = require('logToConsole');
 
-const STORAGE_KEY = 'veribenimIsAwesome';
+const CONSENT_TYPES = [
+  'ad_storage',
+  'analytics_storage',
+  'ad_user_data',
+  'ad_personalization',
+  'functionality_storage',
+  'personalization_storage',
+  'security_storage'
+];
+const DEFAULT_WAIT_FOR_UPDATE = 500;
+const LOG_PREFIX = 'Veribenim Consent Mode:';
 
-/**
- * Veribenim localStorage verisini oku.
- * Sandboxed JS'te doğrudan localStorage erişimi yok,
- * bu yüzden callInWindow ile window üzerinden okuyoruz.
- */
-function readVeribenimConsent() {
-  const raw = callInWindow('localStorage.getItem', STORAGE_KEY);
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw);
-  } catch (e) {
-    log('Veribenim GTM: Failed to parse consent data');
-    return null;
-  }
+function isConsentType(type) {
+  return CONSENT_TYPES.indexOf(type) >= 0;
 }
 
-/**
- * Veribenim consent verisi + cookie kategorilerinden
- * GCM v2 consent state objesi oluştur.
- */
-function buildConsentFromStorage(sessionData) {
-  if (!sessionData || !sessionData.consents) return null;
-
-  const consents = sessionData.consents;
-
-  // Veribenim cookie kategorilerini window'dan oku (bundle tarafından set edilir)
-  const categories = copyFromWindow('__vbn_cookieCategories');
-
-  let analyticsAllowed  = false;
-  let marketingAllowed  = false;
-  let functionalAllowed = false;
-
-  if (categories && getType(categories) === 'array') {
-    // Kategori bazında consent durumunu hesapla
-    for (let i = 0; i < categories.length; i++) {
-      const cat = categories[i];
-      if (!cat || !cat.cookies) continue;
-
-      for (let j = 0; j < cat.cookies.length; j++) {
-        const cookie = cat.cookies[j];
-        if (consents[cookie.id] === true) {
-          if (cat.id === 'analytics')  analyticsAllowed  = true;
-          if (cat.id === 'marketing')  marketingAllowed  = true;
-          if (cat.id === 'functional') functionalAllowed = true;
-        }
-      }
-    }
-  } else {
-    // Kategori bilgisi yoksa, consent key isimlerinden tahmin et
-    const keys = Object.keys(consents);
-    for (let k = 0; k < keys.length; k++) {
-      if (consents[keys[k]] === true) {
-        const key = makeString(keys[k]).toLowerCase();
-        if (key.indexOf('analytics') >= 0 || key.indexOf('istatistik') >= 0) analyticsAllowed = true;
-        if (key.indexOf('marketing') >= 0 || key.indexOf('reklam') >= 0)     marketingAllowed = true;
-        if (key.indexOf('function') >= 0  || key.indexOf('islevsel') >= 0)   functionalAllowed = true;
-      }
-    }
+function splitList(value) {
+  const out = [];
+  if (value === undefined || value === null) return out;
+  const parts = makeString(value).split(',');
+  for (let i = 0; i < parts.length; i++) {
+    const item = parts[i].trim();
+    if (item) out.push(item);
   }
-
-  return {
-    analytics_storage:       analyticsAllowed  ? 'granted' : 'denied',
-    ad_storage:              marketingAllowed  ? 'granted' : 'denied',
-    ad_user_data:            marketingAllowed  ? 'granted' : 'denied',
-    ad_personalization:      marketingAllowed  ? 'granted' : 'denied',
-    functionality_storage:   functionalAllowed ? 'granted' : 'denied',
-    personalization_storage: functionalAllowed ? 'granted' : 'denied',
-    security_storage:        'granted'
-  };
+  return out;
 }
 
-/**
- * Template parametrelerinden consent state objesi oluştur.
- */
-function buildConsentFromParams() {
-  return {
-    analytics_storage:       data.analytics_storage,
-    ad_storage:              data.ad_storage,
-    ad_user_data:            data.ad_user_data,
-    ad_personalization:      data.ad_personalization,
-    functionality_storage:   data.functionality_storage,
-    personalization_storage: data.personalization_storage,
-    security_storage:        data.security_storage
-  };
+// Banner payload -> consent update. Keeps only known consent types with a
+// valid value; never fills in a missing key; never denies security_storage.
+// Returns undefined when nothing valid is left.
+function sanitizeUpdate(payload) {
+  if (getType(payload) !== 'object') return undefined;
+  const out = {};
+  let count = 0;
+  for (let i = 0; i < CONSENT_TYPES.length; i++) {
+    const type = CONSENT_TYPES[i];
+    const value = payload[type];
+    if (value === undefined) continue;
+    if (value !== 'granted' && value !== 'denied') {
+      log(LOG_PREFIX, 'ignored invalid value for ' + type + ':', value);
+      continue;
+    }
+    if (type === 'security_storage' && value === 'denied') {
+      log(LOG_PREFIX, 'ignored security_storage: denied (security storage is never denied)');
+      continue;
+    }
+    out[type] = value;
+    count++;
+  }
+  return count > 0 ? out : undefined;
 }
 
-/**
- * DataLayer'a consent durumunu push et.
- */
-function pushToDataLayer(consentState, command) {
-  if (!data.enableDataLayerEvent) return;
-
-  callInWindow('dataLayer.push', {
-    event: 'veribenim_consent_update',
-    veribenim_consent_command: command,
-    veribenim_consent_state: consentState
-  });
+function applyUpdate(payload, origin) {
+  const update = sanitizeUpdate(payload);
+  if (!update) {
+    log(LOG_PREFIX, 'no valid consent values from ' + origin + ', nothing updated');
+    return false;
+  }
+  updateConsentState(update);
+  log(LOG_PREFIX, 'consent updated from ' + origin, update);
+  return true;
 }
 
-// ── MAIN LOGIC ─────────────────────────────────────────────────────────────
+function waitForUpdate() {
+  const raw = data.waitForUpdate;
+  if (raw === undefined || raw === null || raw === '') return DEFAULT_WAIT_FOR_UPDATE;
+  const ms = makeNumber(raw);
+  if (ms !== ms || ms < 0) return DEFAULT_WAIT_FOR_UPDATE;
+  return ms;
+}
 
-if (data.consentCommand === 'default') {
-  // ── DEFAULT: Sayfa yüklenirken başlangıç değerlerini ayarla ──
+// One table row -> one setDefaultConsentState call.
+function buildDefault(row, wait) {
+  const state = {};
+  const granted = splitList(row.granted);
+  const denied = splitList(row.denied);
 
-  let consentState = buildConsentFromParams();
-
-  // Otomatik okuma aktifse, localStorage'dan consent al.
-  // buildConsentFromStorage kategori bazında hem ilk ziyaret
-  // (is_enabled_by_default) hem de kayıtlı kullanıcı tercihlerini çözer.
-  if (data.autoReadConsent) {
-    const sessionData = readVeribenimConsent();
-    const storedConsent = buildConsentFromStorage(sessionData);
-    if (storedConsent) consentState = storedConsent;
-  }
-
-  // wait_for_update ekle
-  consentState.wait_for_update = makeNumber(data.waitForUpdate) || 500;
-
-  // Region filtresi
-  if (data.regions) {
-    const regionList = makeString(data.regions).split(',');
-    const trimmed = [];
-    for (let r = 0; r < regionList.length; r++) {
-      const val = makeString(regionList[r]).trim();
-      if (val) trimmed.push(val);
-    }
-    if (trimmed.length > 0) {
-      consentState.region = trimmed;
-    }
-  }
-
-  setDefaultConsentState(consentState);
-
-  log('Veribenim GTM: Default consent set', consentState);
-  pushToDataLayer(consentState, 'default');
-
-  // ── Advanced settings ──
-  if (data.urlPassthrough) {
-    gtagSet('url_passthrough', true);
-  }
-  if (data.adsDataRedaction) {
-    gtagSet('ads_data_redaction', true);
-  }
-
-  // ── Veribenim consent değişiklik dinleyicisi ──
-  // Bundle, consent değiştiğinde window.__vbn_gtm_onConsentChange callback'ini
-  // çağırır. Bu callback GTM updateConsentState ile senkronize eder.
-  function applyConsentUpdate(newConsentState) {
-    if (!newConsentState) return;
-
-    updateConsentState({
-      analytics_storage:       newConsentState.analytics_storage       || 'denied',
-      ad_storage:              newConsentState.ad_storage              || 'denied',
-      ad_user_data:            newConsentState.ad_user_data            || 'denied',
-      ad_personalization:      newConsentState.ad_personalization      || 'denied',
-      functionality_storage:   newConsentState.functionality_storage   || 'denied',
-      personalization_storage: newConsentState.personalization_storage || 'denied',
-      security_storage:        'granted'
-    });
-
-    log('Veribenim GTM: Consent updated via listener', newConsentState);
-    pushToDataLayer(newConsentState, 'update');
-  }
-
-  setInWindow('__vbn_gtm_onConsentChange', applyConsentUpdate, true);
-
-  // Handshake: Bundle, GTM bu callback'i kaydetmeden ÖNCE consent değiştirmiş
-  // olabilir (yarış durumu). Bu durumda bundle son durumu
-  // window.__vbn_gtm_pendingConsent içine yazar; varsa hemen uygula.
-  if (data.autoReadConsent) {
-    const pending = copyFromWindow('__vbn_gtm_pendingConsent');
-    if (pending) {
-      applyConsentUpdate(pending);
+  for (let i = 0; i < granted.length; i++) {
+    if (isConsentType(granted[i])) {
+      state[granted[i]] = 'granted';
     } else {
-      // Kullanıcı zaten tercih yapmışsa (lastInteraction), kayıtlı durumu uygula.
-      const session = readVeribenimConsent();
-      if (session && session.lastInteraction) {
-        const already = buildConsentFromStorage(session);
-        if (already) applyConsentUpdate(already);
-      }
+      log(LOG_PREFIX, 'ignored unknown consent type:', granted[i]);
     }
   }
-
-} else if (data.consentCommand === 'update') {
-  // ── UPDATE: Kullanıcı tercihini değiştirdiğinde ──
-
-  let consentState = buildConsentFromParams();
-
-  if (data.autoReadConsent) {
-    const sessionData = readVeribenimConsent();
-    const storedConsent = buildConsentFromStorage(sessionData);
-    if (storedConsent) consentState = storedConsent;
+  for (let j = 0; j < denied.length; j++) {
+    const type = denied[j];
+    if (!isConsentType(type)) {
+      log(LOG_PREFIX, 'ignored unknown consent type:', type);
+    } else if (type === 'security_storage') {
+      log(LOG_PREFIX, 'ignored security_storage in denied list (security storage is never denied)');
+    } else {
+      // Listed in both columns: denied wins.
+      state[type] = 'denied';
+    }
   }
+  state.security_storage = 'granted';
+  state.wait_for_update = wait;
 
-  updateConsentState(consentState);
-
-  log('Veribenim GTM: Consent updated', consentState);
-  pushToDataLayer(consentState, 'update');
+  const regions = splitList(row.region);
+  if (regions.length > 0) state.region = regions;
+  return state;
 }
 
-data.gtmOnSuccess();
+function runDefault() {
+  const rows = getType(data.defaultSettings) === 'array' ? data.defaultSettings : [];
+  const wait = waitForUpdate();
+  let configured = false;
+
+  for (let i = 0; i < rows.length; i++) {
+    if (getType(rows[i]) !== 'object') continue;
+    const state = buildDefault(rows[i], wait);
+    setDefaultConsentState(state);
+    configured = true;
+    log(LOG_PREFIX, 'default consent set', state);
+  }
+
+  if (data.adsDataRedaction === true) {
+    gtagSet({ ads_data_redaction: true });
+  }
+  if (data.urlPassthrough === true) {
+    gtagSet({ url_passthrough: true });
+  }
+
+  // The banner calls this on every decision and every restored decision.
+  setInWindow('__vbn_gtm_onConsentChange', function(payload) {
+    applyUpdate(payload, 'banner');
+  }, true);
+
+  // A restored decision may already be in the data layer: the banner script
+  // runs before the container and pushes 'vbn_consent_update' before this
+  // callback exists.
+  const restored = copyFromDataLayer('vbn_consent');
+  if (restored !== undefined) applyUpdate(restored, 'data layer');
+
+  if (!configured) {
+    log(LOG_PREFIX, 'no default consent rows configured');
+    return false;
+  }
+
+  const categories = copyFromWindow('__vbn_cookieCategories');
+  if (getType(categories) !== 'array') {
+    log(LOG_PREFIX, 'Veribenim banner script not found. Load it before the GTM container snippet, without async.');
+    return false;
+  }
+  return true;
+}
+
+function runUpdate() {
+  return applyUpdate(copyFromDataLayer('vbn_consent'), 'data layer');
+}
+
+const ok = data.consentCommand === 'update' ? runUpdate() : runDefault();
+
+if (ok) {
+  data.gtmOnSuccess();
+} else {
+  data.gtmOnFailure();
+}
 
 
 ___WEB_PERMISSIONS___
@@ -520,7 +336,7 @@ ___WEB_PERMISSIONS___
     "instance": {
       "key": {
         "publicId": "logging",
-        "vpiId": "1"
+        "versionId": "1"
       },
       "param": [
         {
@@ -541,7 +357,7 @@ ___WEB_PERMISSIONS___
     "instance": {
       "key": {
         "publicId": "access_globals",
-        "vpiId": "2"
+        "versionId": "1"
       },
       "param": [
         {
@@ -549,45 +365,6 @@ ___WEB_PERMISSIONS___
           "value": {
             "type": 2,
             "listItem": [
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "key"
-                  },
-                  {
-                    "type": 1,
-                    "string": "read"
-                  },
-                  {
-                    "type": 1,
-                    "string": "write"
-                  },
-                  {
-                    "type": 1,
-                    "string": "execute"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "dataLayer"
-                  },
-                  {
-                    "type": 8,
-                    "boolean": true
-                  },
-                  {
-                    "type": 8,
-                    "boolean": true
-                  },
-                  {
-                    "type": 8,
-                    "boolean": false
-                  }
-                ]
-              },
               {
                 "type": 3,
                 "mapKey": [
@@ -650,45 +427,6 @@ ___WEB_PERMISSIONS___
                 "mapValue": [
                   {
                     "type": 1,
-                    "string": "__vbn_gtm_pendingConsent"
-                  },
-                  {
-                    "type": 8,
-                    "boolean": true
-                  },
-                  {
-                    "type": 8,
-                    "boolean": false
-                  },
-                  {
-                    "type": 8,
-                    "boolean": false
-                  }
-                ]
-              },
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "key"
-                  },
-                  {
-                    "type": 1,
-                    "string": "read"
-                  },
-                  {
-                    "type": 1,
-                    "string": "write"
-                  },
-                  {
-                    "type": 1,
-                    "string": "execute"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
                     "string": "__vbn_gtm_onConsentChange"
                   },
                   {
@@ -702,84 +440,6 @@ ___WEB_PERMISSIONS___
                   {
                     "type": 8,
                     "boolean": false
-                  }
-                ]
-              },
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "key"
-                  },
-                  {
-                    "type": 1,
-                    "string": "read"
-                  },
-                  {
-                    "type": 1,
-                    "string": "write"
-                  },
-                  {
-                    "type": 1,
-                    "string": "execute"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "localStorage.getItem"
-                  },
-                  {
-                    "type": 8,
-                    "boolean": true
-                  },
-                  {
-                    "type": 8,
-                    "boolean": false
-                  },
-                  {
-                    "type": 8,
-                    "boolean": true
-                  }
-                ]
-              },
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "key"
-                  },
-                  {
-                    "type": 1,
-                    "string": "read"
-                  },
-                  {
-                    "type": 1,
-                    "string": "write"
-                  },
-                  {
-                    "type": 1,
-                    "string": "execute"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "dataLayer.push"
-                  },
-                  {
-                    "type": 8,
-                    "boolean": false
-                  },
-                  {
-                    "type": 8,
-                    "boolean": false
-                  },
-                  {
-                    "type": 8,
-                    "boolean": true
                   }
                 ]
               }
@@ -796,8 +456,8 @@ ___WEB_PERMISSIONS___
   {
     "instance": {
       "key": {
-        "publicId": "write_data_layer",
-        "vpiId": "3"
+        "publicId": "read_data_layer",
+        "versionId": "1"
       },
       "param": [
         {
@@ -814,15 +474,37 @@ ___WEB_PERMISSIONS___
             "listItem": [
               {
                 "type": 1,
-                "string": "veribenim_consent_update"
+                "string": "vbn_consent"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "write_data_layer",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "keyPatterns",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 1,
+                "string": "ads_data_redaction"
               },
               {
                 "type": 1,
-                "string": "veribenim_consent_command"
-              },
-              {
-                "type": 1,
-                "string": "veribenim_consent_state"
+                "string": "url_passthrough"
               }
             ]
           }
@@ -838,7 +520,7 @@ ___WEB_PERMISSIONS___
     "instance": {
       "key": {
         "publicId": "access_consent",
-        "vpiId": "4"
+        "versionId": "1"
       },
       "param": [
         {
@@ -869,7 +551,7 @@ ___WEB_PERMISSIONS___
                   },
                   {
                     "type": 8,
-                    "boolean": true
+                    "boolean": false
                   },
                   {
                     "type": 8,
@@ -900,7 +582,7 @@ ___WEB_PERMISSIONS___
                   },
                   {
                     "type": 8,
-                    "boolean": true
+                    "boolean": false
                   },
                   {
                     "type": 8,
@@ -931,7 +613,7 @@ ___WEB_PERMISSIONS___
                   },
                   {
                     "type": 8,
-                    "boolean": true
+                    "boolean": false
                   },
                   {
                     "type": 8,
@@ -962,7 +644,7 @@ ___WEB_PERMISSIONS___
                   },
                   {
                     "type": 8,
-                    "boolean": true
+                    "boolean": false
                   },
                   {
                     "type": 8,
@@ -993,7 +675,7 @@ ___WEB_PERMISSIONS___
                   },
                   {
                     "type": 8,
-                    "boolean": true
+                    "boolean": false
                   },
                   {
                     "type": 8,
@@ -1024,7 +706,7 @@ ___WEB_PERMISSIONS___
                   },
                   {
                     "type": 8,
-                    "boolean": true
+                    "boolean": false
                   },
                   {
                     "type": 8,
@@ -1055,7 +737,7 @@ ___WEB_PERMISSIONS___
                   },
                   {
                     "type": 8,
-                    "boolean": true
+                    "boolean": false
                   },
                   {
                     "type": 8,
@@ -1079,30 +761,13 @@ ___WEB_PERMISSIONS___
 ___TESTS___
 
 scenarios:
-- name: Default consent - all denied
+- name: Default - global row sets denied defaults and security_storage granted
   code: |-
-    const mockData = {
-      consentCommand: 'default',
-      waitForUpdate: 500,
-      analytics_storage: 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      functionality_storage: 'denied',
-      personalization_storage: 'denied',
-      security_storage: 'granted',
-      autoReadConsent: false,
-      regions: '',
-      urlPassthrough: true,
-      adsDataRedaction: true,
-      enableDataLayerEvent: false
-    };
-
-    runCode(mockData);
+    runCode(baseData());
 
     assertApi('setDefaultConsentState').wasCalledWith({
-      analytics_storage: 'denied',
       ad_storage: 'denied',
+      analytics_storage: 'denied',
       ad_user_data: 'denied',
       ad_personalization: 'denied',
       functionality_storage: 'denied',
@@ -1110,191 +775,229 @@ scenarios:
       security_storage: 'granted',
       wait_for_update: 500
     });
-    assertApi('gtagSet').wasCalledWith('url_passthrough', true);
-    assertApi('gtagSet').wasCalledWith('ads_data_redaction', true);
+    assertApi('gtagSet').wasCalledWith({ ads_data_redaction: true });
+    assertApi('gtagSet').wasNotCalledWith({ url_passthrough: true });
+    assertApi('updateConsentState').wasNotCalled();
     assertApi('gtmOnSuccess').wasCalled();
-
-- name: Default consent - with region
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: Default - one call per region row, region list trimmed
   code: |-
-    const mockData = {
-      consentCommand: 'default',
-      waitForUpdate: 500,
-      analytics_storage: 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      functionality_storage: 'denied',
-      personalization_storage: 'denied',
-      security_storage: 'granted',
-      autoReadConsent: false,
-      regions: 'TR,DE,FR',
-      urlPassthrough: false,
-      adsDataRedaction: false,
-      enableDataLayerEvent: false
-    };
-
-    runCode(mockData);
+    const d = baseData();
+    d.waitForUpdate = '2000';
+    d.defaultSettings = [
+      { region: ' TR, DE ,FR ', granted: '', denied: 'ad_storage,analytics_storage,ad_user_data,ad_personalization' },
+      { region: '', granted: 'ad_storage,analytics_storage', denied: 'ad_user_data,ad_personalization' }
+    ];
+    runCode(d);
 
     assertApi('setDefaultConsentState').wasCalledWith({
-      analytics_storage: 'denied',
       ad_storage: 'denied',
+      analytics_storage: 'denied',
       ad_user_data: 'denied',
       ad_personalization: 'denied',
-      functionality_storage: 'denied',
-      personalization_storage: 'denied',
       security_storage: 'granted',
-      wait_for_update: 500,
+      wait_for_update: 2000,
       region: ['TR', 'DE', 'FR']
     });
-    assertApi('gtmOnSuccess').wasCalled();
-
-- name: Update consent - manual granted
-  code: |-
-    const mockData = {
-      consentCommand: 'update',
-      analytics_storage: 'granted',
+    assertApi('setDefaultConsentState').wasCalledWith({
       ad_storage: 'granted',
-      ad_user_data: 'granted',
-      ad_personalization: 'granted',
-      functionality_storage: 'granted',
-      personalization_storage: 'granted',
-      security_storage: 'granted',
-      autoReadConsent: false,
-      enableDataLayerEvent: false
-    };
-
-    runCode(mockData);
-
-    assertApi('updateConsentState').wasCalledWith({
       analytics_storage: 'granted',
-      ad_storage: 'granted',
-      ad_user_data: 'granted',
-      ad_personalization: 'granted',
-      functionality_storage: 'granted',
-      personalization_storage: 'granted',
-      security_storage: 'granted'
-    });
-    assertApi('gtmOnSuccess').wasCalled();
-
-- name: Default consent - auto-read from storage (user interacted)
-  code: |-
-    const mockData = {
-      consentCommand: 'default',
-      waitForUpdate: 500,
-      analytics_storage: 'denied',
-      ad_storage: 'denied',
       ad_user_data: 'denied',
       ad_personalization: 'denied',
-      functionality_storage: 'denied',
-      personalization_storage: 'denied',
       security_storage: 'granted',
-      autoReadConsent: true,
-      regions: '',
-      urlPassthrough: false,
-      adsDataRedaction: false,
-      enableDataLayerEvent: false
-    };
-
-    const storage = '{"consents":{"ga":true,"fb":false},"lastInteraction":"2026-06-01"}';
-    const categories = [
-      { id: 'analytics', cookies: [ { id: 'ga' } ] },
-      { id: 'marketing', cookies: [ { id: 'fb' } ] }
+      wait_for_update: 2000
+    });
+    assertApi('gtmOnSuccess').wasCalled();
+- name: Default - unknown types ignored, security_storage never denied, denied wins
+  code: |-
+    const d = baseData();
+    d.defaultSettings = [
+      { region: '', granted: 'analytics_storage,foo_storage', denied: 'analytics_storage,security_storage,bar' }
     ];
-
-    mock('callInWindow', function(path) {
-      if (path === 'localStorage.getItem') return storage;
-      return undefined;
-    });
-    mock('copyFromWindow', function(key) {
-      if (key === '__vbn_cookieCategories') return categories;
-      return undefined;
-    });
-
-    runCode(mockData);
+    runCode(d);
 
     assertApi('setDefaultConsentState').wasCalledWith({
-      analytics_storage: 'granted',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      functionality_storage: 'denied',
-      personalization_storage: 'denied',
+      analytics_storage: 'denied',
       security_storage: 'granted',
       wait_for_update: 500
     });
     assertApi('gtmOnSuccess').wasCalled();
-
-- name: Update consent - auto-read from storage
+- name: Default - url_passthrough only when enabled, invalid wait falls back to 500
   code: |-
-    const mockData = {
-      consentCommand: 'update',
-      analytics_storage: 'denied',
+    const d = baseData();
+    d.urlPassthrough = true;
+    d.adsDataRedaction = false;
+    d.waitForUpdate = 'abc';
+    d.defaultSettings = [ { region: '', granted: '', denied: 'ad_storage' } ];
+    runCode(d);
+
+    assertApi('gtagSet').wasCalledWith({ url_passthrough: true });
+    assertApi('gtagSet').wasNotCalledWith({ ads_data_redaction: true });
+    assertApi('setDefaultConsentState').wasCalledWith({
+      ad_storage: 'denied',
+      security_storage: 'granted',
+      wait_for_update: 500
+    });
+- name: Default - banner callback updates exactly the keys it receives
+  code: |-
+    runCode(baseData());
+
+    assertThat(callbacks.__vbn_gtm_onConsentChange).isFunction();
+    callbacks.__vbn_gtm_onConsentChange({
+      analytics_storage: 'granted',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      functionality_storage: 'granted',
+      personalization_storage: 'granted'
+    });
+
+    assertApi('updateConsentState').wasCalledWith({
+      analytics_storage: 'granted',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      functionality_storage: 'granted',
+      personalization_storage: 'granted'
+    });
+- name: Default - missing keys in banner payload are not filled in
+  code: |-
+    runCode(baseData());
+
+    callbacks.__vbn_gtm_onConsentChange({ analytics_storage: 'granted' });
+
+    assertApi('updateConsentState').wasCalledWith({ analytics_storage: 'granted' });
+    assertApi('updateConsentState').wasNotCalledWith({
+      analytics_storage: 'granted',
       ad_storage: 'denied',
       ad_user_data: 'denied',
       ad_personalization: 'denied',
       functionality_storage: 'denied',
       personalization_storage: 'denied',
-      security_storage: 'granted',
-      autoReadConsent: true,
-      enableDataLayerEvent: false
+      security_storage: 'granted'
+    });
+- name: Default - invalid values in banner payload are ignored
+  code: |-
+    runCode(baseData());
+
+    callbacks.__vbn_gtm_onConsentChange({
+      analytics_storage: 'yes',
+      ad_storage: 'denied',
+      ad_user_data: true,
+      security_storage: 'denied',
+      unknown_storage: 'granted'
+    });
+    assertApi('updateConsentState').wasCalledWith({ ad_storage: 'denied' });
+- name: Default - payload with no valid values does not update
+  code: |-
+    runCode(baseData());
+
+    callbacks.__vbn_gtm_onConsentChange({ analytics_storage: 'maybe' });
+    callbacks.__vbn_gtm_onConsentChange(undefined);
+    callbacks.__vbn_gtm_onConsentChange('granted');
+    assertApi('updateConsentState').wasNotCalled();
+- name: Default - restored consent already in data layer is applied
+  code: |-
+    dataLayerValues.vbn_consent = {
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      functionality_storage: 'denied',
+      personalization_storage: 'denied'
     };
+    runCode(baseData());
 
-    const storage = '{"consents":{"ga":true,"fb":true},"lastInteraction":"2026-06-01"}';
-    const categories = [
-      { id: 'analytics', cookies: [ { id: 'ga' } ] },
-      { id: 'marketing', cookies: [ { id: 'fb' } ] }
-    ];
-
-    mock('callInWindow', function(path) {
-      if (path === 'localStorage.getItem') return storage;
-      return undefined;
-    });
-    mock('copyFromWindow', function(key) {
-      if (key === '__vbn_cookieCategories') return categories;
-      return undefined;
-    });
-
-    runCode(mockData);
-
+    assertApi('setDefaultConsentState').wasCalled();
     assertApi('updateConsentState').wasCalledWith({
       analytics_storage: 'granted',
       ad_storage: 'granted',
       ad_user_data: 'granted',
       ad_personalization: 'granted',
       functionality_storage: 'denied',
-      personalization_storage: 'denied',
-      security_storage: 'granted'
+      personalization_storage: 'denied'
     });
     assertApi('gtmOnSuccess').wasCalled();
-
-- name: DataLayer event pushed on default
+- name: Default - banner not loaded fails the tag but keeps defaults and callback
   code: |-
-    const mockData = {
-      consentCommand: 'default',
-      waitForUpdate: 500,
+    windowValues.__vbn_cookieCategories = undefined;
+    runCode(baseData());
+
+    assertApi('setDefaultConsentState').wasCalled();
+    assertThat(callbacks.__vbn_gtm_onConsentChange).isFunction();
+    assertApi('gtmOnFailure').wasCalled();
+    assertApi('gtmOnSuccess').wasNotCalled();
+- name: Default - empty settings table fails the tag
+  code: |-
+    const d = baseData();
+    d.defaultSettings = [];
+    runCode(d);
+
+    assertApi('setDefaultConsentState').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+    assertApi('gtmOnSuccess').wasNotCalled();
+- name: Update - applies vbn_consent from the data layer
+  code: |-
+    dataLayerValues.vbn_consent = {
       analytics_storage: 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
       ad_personalization: 'denied',
-      functionality_storage: 'denied',
-      personalization_storage: 'denied',
-      security_storage: 'granted',
-      autoReadConsent: false,
-      regions: '',
-      urlPassthrough: false,
-      adsDataRedaction: false,
-      enableDataLayerEvent: true
+      functionality_storage: 'granted',
+      personalization_storage: 'granted'
     };
+    runCode({ consentCommand: 'update' });
 
-    let pushedEvent;
-    mock('callInWindow', function(path, obj) {
-      if (path === 'dataLayer.push') pushedEvent = obj;
-      return undefined;
+    assertApi('setDefaultConsentState').wasNotCalled();
+    assertApi('updateConsentState').wasCalledWith({
+      analytics_storage: 'denied',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'denied',
+      functionality_storage: 'granted',
+      personalization_storage: 'granted'
     });
-
-    runCode(mockData);
-
-    assertThat(pushedEvent).isDefined();
-    assertThat(pushedEvent.event).isEqualTo('veribenim_consent_update');
-    assertThat(pushedEvent.veribenim_consent_command).isEqualTo('default');
     assertApi('gtmOnSuccess').wasCalled();
+- name: Update - no vbn_consent in the data layer fails the tag
+  code: |-
+    runCode({ consentCommand: 'update' });
+
+    assertApi('updateConsentState').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+    assertApi('gtmOnSuccess').wasNotCalled();
+setup: |-
+  const callbacks = {};
+  const windowValues = {
+    __vbn_cookieCategories: [
+      { id: 'analytics', cookies: [ { id: 'ga' } ] },
+      { id: 'marketing', cookies: [ { id: 'ads' } ] }
+    ]
+  };
+  const dataLayerValues = {};
+
+  mock('copyFromWindow', function(key) {
+    return windowValues[key];
+  });
+  mock('setInWindow', function(key, value, overrideExisting) {
+    callbacks[key] = value;
+    return true;
+  });
+  mock('copyFromDataLayer', function(key) {
+    return dataLayerValues[key];
+  });
+
+  function baseData() {
+    return {
+      consentCommand: 'default',
+      defaultSettings: [
+        {
+          region: '',
+          granted: '',
+          denied: 'ad_storage,analytics_storage,ad_user_data,ad_personalization,functionality_storage,personalization_storage'
+        }
+      ],
+      waitForUpdate: '500',
+      urlPassthrough: false,
+      adsDataRedaction: true
+    };
+  }

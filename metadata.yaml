@@ -1,12 +1,25 @@
+# Community Template Gallery metadata.
+# https://developers.google.com/tag-platform/tag-manager/templates/gallery
+#
+# OWNER TODO before submitting (SAHİBİ DOLDURACAK):
+#   - Replace the sha below with the FULL 40-character SHA of the commit on
+#     the main branch that contains the template.tpl you are publishing
+#     (copy it from GitHub's commit view). The placeholder is intentionally
+#     not a valid SHA so the Gallery cannot pick up an unreviewed version.
+#   - Newest version first. Add a new entry on top for every release.
+#   - documentation: points to this repository's README until a page exists
+#     on veribenim.com (https://veribenim.com/docs/gtm-consent-mode returned
+#     404 on 2026-11-15).
 homepage: "https://veribenim.com"
-documentation: "https://veribenim.com/docs/gtm-consent-mode"
+documentation: "https://github.com/Pariette-Inc/veribenim.gtm-template#readme"
 versions:
-  - sha: 119b4561580954e49718b747c706a228af84e333
+  - sha: REPLACE_WITH_FULL_40_CHAR_COMMIT_SHA_ON_MAIN
     changeNotes: |
-      Initial release — Google Consent Mode v2 integration.
-      - Supports all GCM v2 consent types (ad_storage, analytics_storage, ad_user_data, ad_personalization, functionality_storage, personalization_storage, security_storage)
-      - Automatic consent reading from Veribenim localStorage
-      - Region-based default consent
-      - URL passthrough and ads data redaction
-      - Real-time consent change listener via __vbn_gtm_onConsentChange callback
-      - Optional dataLayer event push
+      Initial release - Google consent mode v2 for the Veribenim cookie banner.
+      - Default consent states per region (granted / denied consent types per row).
+      - Listens for banner decisions via window.__vbn_gtm_onConsentChange.
+      - Update command applies vbn_consent from the vbn_consent_update data layer event.
+      - Only keys sent by the banner are updated; invalid values are ignored.
+      - security_storage is always granted.
+      - Tag fails when the Veribenim banner script is not on the page.
+      - Optional ads_data_redaction (on by default) and url_passthrough (off by default).
